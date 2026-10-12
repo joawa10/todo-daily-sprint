@@ -9,6 +9,33 @@ npm install
 npx expo start
 ```
 
+## Android build sizes
+
+For a directly installable test APK, use the preview profile:
+
+```bash
+npm run build:android
+```
+
+or:
+
+```bash
+eas build --profile preview --platform android
+```
+
+The `preview` profile creates an internal-distribution APK without the Expo development
+client. The `development` profile is intentionally larger because it includes the
+development client, debugging tools, and unoptimized native libraries:
+
+```bash
+eas build --profile development --platform android
+```
+
+Use the development profile only when you need to connect the installed app to
+`npx expo start`. For normal device testing, use `preview`. For store release builds,
+use `eas build --profile production`; Android production builds are optimized for
+distribution and are normally generated as an AAB.
+
 ## Structure
 
 - `app/`: Expo Router screens, tabs, and full-screen modals

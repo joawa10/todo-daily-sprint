@@ -1,1 +1,71 @@
-{"expo":{"name":"Daily Sprint","slug":"daily-sprint","scheme":"dailysprint","version":"1.0.0","orientation":"portrait","userInterfaceStyle":"automatic","newArchEnabled":true,"icon":"./assets/icon.png","splash":{"image":"./assets/splash-icon.png","resizeMode":"contain","backgroundColor":"#ffffff"},"ios":{"supportsTablet":false},"android":{"package":"com.dailysprint.app","adaptiveIcon":{"foregroundImage":"./assets/adaptive-icon.png","backgroundColor":"#ffffff"}},"web":{"favicon":"./assets/favicon.png"},"plugins":["expo-router","expo-font","@react-native-community/datetimepicker"]}}
+{
+  "expo": {
+    "name": "Daily Sprint",
+    "slug": "daily-sprint",
+    "scheme": "dailysprint",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash-blank.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F3F5F8"
+    },
+    "ios": {
+      "supportsTablet": false
+    },
+    "android": {
+      "package": "com.dailysprint.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      ["expo-font", {
+        "fonts": [
+          "./assets/fonts/BricolageGrotesque_400Regular.ttf",
+          "./assets/fonts/BricolageGrotesque_600SemiBold.ttf",
+          "./assets/fonts/BricolageGrotesque_800ExtraBold.ttf"
+        ]
+      }],
+      "@react-native-community/datetimepicker",
+      ["expo-splash-screen", {
+        "backgroundColor": "#F3F5F8",
+        "image": "./assets/splash-blank.png",
+        "imageWidth": 200,
+        "dark": {
+          "backgroundColor": "#10151C",
+          "image": "./assets/splash-blank.png"
+        }
+      }],
+      ["react-native-android-widget", {
+        "widgets": [{
+          "name": "TodaySprint",
+          "label": "Today’s sprint",
+          "description": "Your tasks for today",
+          "minWidth": "110dp",
+          "minHeight": "250dp",
+          "targetCellWidth": 2,
+          "targetCellHeight": 4,
+          "resizeMode": "horizontal|vertical",
+          "previewImage": "./assets/widget-preview/today.png",
+          "updatePeriodMillis": 1800000
+        }]
+      }],
+      "expo-build-properties"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "77840fe7-9969-4b6b-9fcf-aec117ed3ed2"
+      }
+    }
+  }
+}

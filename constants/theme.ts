@@ -1,0 +1,4 @@
+export type Palette={bg:string;card:string;ink:string;mute:string;line:string;accent:string;accentInk:string;accentSoft:string;sprint:string;sprintInk:string;danger:string;cardShadow:boolean};
+export const light:Palette={bg:'#F3F5F8',card:'#FFFFFF',ink:'#16202C',mute:'#6B7686',line:'#E1E6ED',accent:'#2F5BFF',accentInk:'#FFFFFF',accentSoft:'rgba(47,91,255,0.14)',sprint:'#FFB400',sprintInk:'#16202C',danger:'#D6402F',cardShadow:true};
+export const dark:Palette={bg:'#10151C',card:'#1A212B',ink:'#EEF1F5',mute:'#8C97A8',line:'#2A3340',accent:'#6C8AFF',accentInk:'#0B1020',accentSoft:'rgba(108,138,255,0.14)',sprint:'#FFB400',sprintInk:'#16202C',danger:'#D6402F',cardShadow:false};
+export const fonts={regular:'BricolageGrotesque_400Regular',semibold:'BricolageGrotesque_600SemiBold',extrabold:'BricolageGrotesque_800ExtraBold'} as const;

@@ -1,0 +1,1 @@
+import {Text} from 'react-native';import {fonts} from '@/constants/theme';import {useTheme} from '@/hooks/useTheme';export function GroupLabel({label}:{label:string}){const t=useTheme();return <Text style={{fontFamily:fonts.semibold,fontSize:14,color:t.mute,marginTop:22,marginBottom:8}}>{label}</Text>}

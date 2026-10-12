@@ -1,3 +1,155 @@
-import {create} from 'zustand';import {createJSONStorage,persist} from 'zustand/middleware';import AsyncStorage from '@react-native-async-storage/async-storage';import {STORAGE_KEY,SEED_SAMPLE_DATA} from '@/constants/config';import {buildSeed} from '@/utils/seed';import {Task} from '@/types/task';import {newId} from '@/utils/ids';import {todayKey} from '@/utils/dates';
-type NewTask={title:string;notes?:string;sprintDate:string|null};type State={tasks:Task[];hasHydrated:boolean;addTask:(t:NewTask)=>void;updateTask:(id:string,p:Partial<Pick<Task,'title'|'notes'|'sprintDate'>>)=>void;deleteTask:(id:string)=>void;toggleDone:(id:string)=>void;assignToToday:(id:string)=>void;resolveReview:(id:string,to:'today'|'backlog')=>void;keepAllForToday:()=>void;reorderToday:(ids:string[])=>void;_setHydrated:()=>void};
-export const useTasks=create<State>()(persist((set)=>({tasks:[],hasHydrated:false,addTask:({title,notes='',sprintDate})=>set(s=>({tasks:[...s.tasks,{id:newId(),title:title.trim(),notes:notes.trim(),sprintDate,done:false,createdAt:Date.now()}]})),updateTask:(id,p)=>set(s=>({tasks:s.tasks.map(t=>t.id===id?{...t,...p}:t)})),deleteTask:id=>set(s=>({tasks:s.tasks.filter(t=>t.id!==id)})),toggleDone:id=>set(s=>({tasks:s.tasks.map(t=>t.id===id?{...t,done:!t.done,completedAt:!t.done?Date.now():undefined}:t)})),assignToToday:id=>set(s=>({tasks:s.tasks.map(t=>t.id===id?{...t,sprintDate:todayKey()}:t)})),resolveReview:(id,to)=>set(s=>({tasks:s.tasks.map(t=>t.id===id?{...t,sprintDate:to==='today'?todayKey():null}:t)})),keepAllForToday:()=>set(s=>{const today=todayKey();return{tasks:s.tasks.map(t=>t.sprintDate&&t.sprintDate<today&&!t.done?{...t,sprintDate:today}:t)}}),reorderToday:ids=>set(s=>{const today=todayKey(),slots:number[]=[];s.tasks.forEach((t,i)=>{if(t.sprintDate===today)slots.push(i)});if(slots.length!==ids.length)return s;const map=new Map(s.tasks.map(t=>[t.id,t])),next=[...s.tasks];slots.forEach((ix,i)=>{const t=map.get(ids[i]);if(t)next[ix]=t});return{tasks:next}}),_setHydrated:()=>set({hasHydrated:true})}),{name:STORAGE_KEY,version:1,storage:createJSONStorage(()=>AsyncStorage),partialize:s=>({tasks:s.tasks}),onRehydrateStorage:()=>state=>{if(state&&SEED_SAMPLE_DATA&&state.tasks.length===0)state.tasks=buildSeed();state?._setHydrated()}})); export const isStale=(t:Task,today:string)=>!!t.sprintDate&&t.sprintDate<today&&!t.done;
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { create } from 'zustand';
+import { STORAGE_KEY, SEED_SAMPLE_DATA } from '@/constants/config';
+import { buildSeed } from '@/utils/seed';
+import { Task } from '@/types/task';
+import { newId } from '@/utils/ids';
+import { todayKey } from '@/utils/dates';
+
+type NewTask = {
+  title: string;
+  notes?: string;
+  sprintDate: string | null;
+};
+
+type State = {
+  tasks: Task[];
+  hasHydrated: boolean;
+  addTask: (task: NewTask) => void;
+  updateTask: (
+    id: string,
+    patch: Partial<Pick<Task, 'title' | 'notes' | 'sprintDate'>>,
+  ) => void;
+  deleteTask: (id: string) => void;
+  toggleDone: (id: string) => void;
+  assignToToday: (id: string) => void;
+  resolveReview: (id: string, to: 'today' | 'backlog') => void;
+  keepAllForToday: () => void;
+  reorderToday: (ids: string[]) => void;
+};
+
+const persistTasks = (tasks: Task[]) => {
+  void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ tasks }));
+};
+
+export const useTasks = create<State>((set) => {
+  const update = (recipe: (state: State) => Partial<State>) => {
+    set((state) => {
+      const next = recipe(state);
+      const tasks = next.tasks ?? state.tasks;
+      if (state.hasHydrated) persistTasks(tasks);
+      return next;
+    });
+  };
+
+  void AsyncStorage.getItem(STORAGE_KEY)
+    .then((raw) => {
+      let tasks: Task[] = [];
+      if (raw) {
+        try {
+          const parsed: unknown = JSON.parse(raw);
+          if (
+            parsed &&
+            typeof parsed === 'object' &&
+            'tasks' in parsed &&
+            Array.isArray(parsed.tasks)
+          ) {
+            tasks = parsed.tasks as Task[];
+          }
+        } catch {
+          tasks = [];
+        }
+      }
+      if (SEED_SAMPLE_DATA && tasks.length === 0) tasks = buildSeed();
+      set({ tasks, hasHydrated: true });
+      if (SEED_SAMPLE_DATA && tasks.length > 0) persistTasks(tasks);
+    })
+    .catch(() => {
+      set({ hasHydrated: true });
+    });
+
+  return {
+    tasks: [],
+    hasHydrated: false,
+    addTask: ({ title, notes = '', sprintDate }) =>
+      update((state) => ({
+        tasks: [
+          ...state.tasks,
+          {
+            id: newId(),
+            title: title.trim(),
+            notes: notes.trim(),
+            sprintDate,
+            done: false,
+            createdAt: Date.now(),
+          },
+        ],
+      })),
+    updateTask: (id, patch) =>
+      update((state) => ({
+        tasks: state.tasks.map((task) =>
+          task.id === id ? { ...task, ...patch } : task,
+        ),
+      })),
+    deleteTask: (id) =>
+      update((state) => ({
+        tasks: state.tasks.filter((task) => task.id !== id),
+      })),
+    toggleDone: (id) =>
+      update((state) => ({
+        tasks: state.tasks.map((task) =>
+          task.id === id
+            ? {
+                ...task,
+                done: !task.done,
+                completedAt: !task.done ? Date.now() : undefined,
+              }
+            : task,
+        ),
+      })),
+    assignToToday: (id) =>
+      update((state) => ({
+        tasks: state.tasks.map((task) =>
+          task.id === id ? { ...task, sprintDate: todayKey() } : task,
+        ),
+      })),
+    resolveReview: (id, to) =>
+      update((state) => ({
+        tasks: state.tasks.map((task) =>
+          task.id === id
+            ? { ...task, sprintDate: to === 'today' ? todayKey() : null }
+            : task,
+        ),
+      })),
+    keepAllForToday: () =>
+      update((state) => {
+        const today = todayKey();
+        return {
+          tasks: state.tasks.map((task) =>
+            task.sprintDate && task.sprintDate < today && !task.done
+              ? { ...task, sprintDate: today }
+              : task,
+          ),
+        };
+      }),
+    reorderToday: (ids) =>
+      update((state) => {
+        const today = todayKey();
+        const slots: number[] = [];
+        state.tasks.forEach((task, index) => {
+          if (task.sprintDate === today) slots.push(index);
+        });
+        if (slots.length !== ids.length) return {};
+        const byId = new Map(state.tasks.map((task) => [task.id, task]));
+        const next = [...state.tasks];
+        slots.forEach((slot, index) => {
+          const task = byId.get(ids[index]);
+          if (task) next[slot] = task;
+        });
+        return { tasks: next };
+      }),
+  };
+});
+
+export const isStale = (task: Task, today: string) =>
+  !!task.sprintDate && task.sprintDate < today && !task.done;

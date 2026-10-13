@@ -26,13 +26,15 @@ type State = {
   resolveReview: (id: string, to: 'today' | 'backlog') => void;
   keepAllForToday: () => void;
   reorderToday: (ids: string[]) => void;
+  restoreTask: (id: string, to: 'today' | 'backlog') => void;
+  importTasks: (incoming: Task[]) => { added: number; skipped: number };
 };
 
 const persistTasks = (tasks: Task[]) => {
   void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ tasks }));
 };
 
-export const useTasks = create<State>((set) => {
+export const useTasks = create<State>((set, get) => {
   const update = (recipe: (state: State) => Partial<State>) => {
     set((state) => {
       const next = recipe(state);
@@ -121,6 +123,26 @@ export const useTasks = create<State>((set) => {
             : task,
         ),
       })),
+    restoreTask: (id, to) =>
+      update((state) => {
+        const task = state.tasks.find((item) => item.id === id);
+        if (!task) return {};
+        const restored: Task = {
+            ...task,
+            done: false,
+            completedAt: undefined,
+            sprintDate: to === 'today' ? todayKey() : null,
+        };
+        return { tasks: [...state.tasks.filter((item) => item.id !== id), restored] };
+      }),
+    importTasks: (incoming) => {
+      const existing = new Set(get().tasks.map((task) => task.id));
+      const fresh = incoming.filter((task) => !existing.has(task.id));
+      if (fresh.length > 0) {
+        update((state) => ({ tasks: [...state.tasks, ...fresh] }));
+      }
+      return { added: fresh.length, skipped: incoming.length - fresh.length };
+    },
     keepAllForToday: () =>
       update((state) => {
         const today = todayKey();

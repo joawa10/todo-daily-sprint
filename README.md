@@ -2,6 +2,8 @@
 
 Daily Sprint is a fully offline Expo todo app where each day is a sprint. Tasks can live in a backlog, be assigned to today or a future date, reordered, completed, and reviewed when a new day begins.
 
+Increase `android.versionCode` by 1 for every APK you install by hand; Android refuses to update an app to a lower or equal version in some install methods.
+
 ## Run
 
 ```bash
